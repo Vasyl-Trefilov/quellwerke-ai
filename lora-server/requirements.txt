@@ -1,0 +1,13 @@
+
+# Core model + tokenizer
+torch>=2.2.0
+transformers>=4.45.0
+unsloth>=2025.8.6   # keep in sync with your current Unsloth version
+
+# API server
+fastapi>=0.111.0
+uvicorn[standard]>=0.30.0
+
+# Optional but useful
+accelerate>=0.33.0   # for optimized inference
+bitsandbytes>=0.43.0 # needed if using load_in_4bit=True
