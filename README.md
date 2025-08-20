@@ -31,7 +31,7 @@ v
 ## 📦 Tech Stack
 
 - **Frontend**: React (chat UI)
-- **Backend #1**: Node.js (API for Qdrant + Postgres)
+- **Backend #1**: Node.js (API for Qdrant + Postgres + OpenAi Api)
 - **Backend #2**: Python (FastAPI + LoRA inference)
 - **Vector DB**: Qdrant
 - **Database**: PostgreSQL
@@ -40,11 +40,28 @@ v
 
 ---
 
+## 📡 API Endpoints
+
+- `POST /parse-url` → scrape and chunk website content into Qdrant
+- `POST /search` → semantic search from Qdrant
+- `POST /generate` → LoRA inference response
+
+---
 ## 🚀 Run Locally
 
 ### 1. Clone the repo
 ```bash
-git clone git@github.com:Vasyl-Trefilov/qdrant-lora-microservices.git
-cd qdrant-lora-microservices
-git submodule update --init --recursive
+git clone https://github.com/Vasyl-Trefilov/quellwerke-ai.git
+```
+
+### 2. Start front 
+```bash
+cd chatbot-front
+npm i
+npm run dev
+```
+
+### 3. Start docker
+```bash
+docker compose up --build
 ```
