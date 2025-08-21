@@ -17,7 +17,7 @@ export default function Chatbot() {
     company: "http://0.0.0.0:8000/generate",
   };
   const parseQuellWerke = async () =>{
-    await axios.post("http://localhost:3000/parse-url",{
+    await axios.post("http://localhost:4000/parser/parse-url",{
       url: "https://www.quellwerke.de", 
       lang: "de", 
       title: "QuellWerke"
