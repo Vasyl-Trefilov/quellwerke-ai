@@ -1,0 +1,93 @@
+services:
+  nodeqdrant:
+    build: ./nodeQdrant
+    ports:
+      - "3000:3000"
+    environment:
+      - PGHOST=postgres
+      - PGPORT=5432
+      - PGDATABASE=mydb
+      - PGUSER=myuser
+      - PGPASSWORD=mypassword
+      - DATABASE_URL=postgres://myuser:mypassword@postgres:5432/mydb
+      - OPENAI_API_KEY=sk-...
+      - PARSER_URL=http://parser:4000   
+    depends_on:
+      - qdrant
+      - ollama
+      - postgres
+      - parser                       
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: ["sh", "./entrypoint.sh"]
+
+  parser:                               
+    build: 
+      context: ./axum-crawler
+      dockerfile: Dockerfile    
+    network_mode: host              
+    ports:
+      - "4000:4000"                     
+    environment:
+      - PGHOST=localhost
+      - PGPORT=5432
+      - PGDATABASE=mydb
+      - PGUSER=myuser
+      - PGPASSWORD=mypassword
+      - DATABASE_URL=postgres://myuser:mypassword@localhost:5432/mydb
+      - QDRANT_URL=http://localhost:6333 
+      - OLLAMA_URL=http://localhost:11434   
+    depends_on:
+      - qdrant
+      - postgres
+
+  lora:
+    build: ./lora-server
+    ports:
+      - "8000:8000"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    runtime: nvidia
+
+  qdrant:
+    image: qdrant/qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - ./qdrant_data:/qdrant/storage
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+      - "11435:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    entrypoint: >
+      sh -c "
+        ollama serve &
+        sleep 5 &&
+        ollama pull nomic-embed-text:v1.5 &&
+        wait
+      "
+  postgres:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_DB: mydb
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  ollama_data:
+  postgres_data:
