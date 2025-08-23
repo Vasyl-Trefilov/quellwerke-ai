@@ -30,32 +30,35 @@ app.use(cors())
 const OLLAMA_HOST = "http://ollama:11434/api/embeddings";
 const QDRANT_URL = "http://qdrant:6333";
 
-// 👉 2. Пошук у Qdrant
 app.post("/search", async (req, res) => {
-  const { query, provider } = req.body; 
-  // provider = "ollama" oder "openai"
+  const { query, settings } = req.body;
 
   try {
-    // 1. Embed query (Ollama)
+    // 1) Embed
     const embRes = await axios.post(OLLAMA_HOST, {
       model: "nomic-embed-text:v1.5",
       prompt: query,
     });
     const vector = embRes.data.embedding;
 
-    // 2. Search Qdrant
+    // 2) Qdrant search
     const searchRes = await axios.post(
       `${QDRANT_URL}/collections/kb_v1/points/search`,
       { vector, limit: 8 }
     );
+    const hits = searchRes.data?.result || [];
+    res.setHeader("Content-Type", "application/x-ndjson");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("X-Accel-Buffering", "no");
+    res.setHeader("Transfer-Encoding", "chunked");
 
-    if (!searchRes.data.result.length) {
-      return res.json("Ich weiß es nicht");
+    if (!hits.length) {
+      res.write(JSON.stringify({ delta: "Ich weiß es nicht" }) + "\n");
+      return res.end();
     }
 
-    const ids = searchRes.data.result.map(r => r.id);
-
-    // 3. Fetch chunks from Postgres
+    // 3) Pull chunks from Postgres
+    const ids = hits.map(r => r.id);
     const textFromDb = await db.query(
       `SELECT * FROM chunks WHERE chunk_id = ANY($1::int[])`,
       [ids]
@@ -64,44 +67,55 @@ app.post("/search", async (req, res) => {
     const context = textFromDb.rows
       .map(r => `[Doc ${r.doc_id}, Chunk ${r.chunk_index}]\n${r.text}`)
       .join("\n---\n");
-
-    let answer;
-
-    if (provider === "openai") {
-      // --- GPT-4/5 über OpenAI ---
-      console.log(context);
-      
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini", // oder "gpt-4.1"
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are an assistant for answering customer questions about QuellWerke. Use only the provided context.",
-          },
-          {
-            role: "user",
-            content: `Question: ${query}\n\nContext:\n${context}\n\nAnswer:`,
-          },
-        ],
-      });
-
-      answer = completion.choices[0].message.content;
-    } else if (provider === "lora") {
-      // --- LoRA model branch (Python microservice) ---
-      const response = await axios.post("http://localhost:8000/generate", {
-        question: `Question: ${query}\n\nContext:\n${context}\n\nAnswer:`,
-      });
-      answer = response.data.answer;
+    let lengthHint = "";
+    switch (settings?.answer_length) {
+      case "short":  lengthHint = "Keep the answer brief, 1-2 sentences."; break;
+      case "medium": lengthHint = "Provide a balanced, 2-3 paragraph answer."; break;
+      case "long":   lengthHint = "Provide a very detailed, comprehensive answer."; break;
     }
 
-    res.json({ answer });
+    // 4) Stream OpenAI
+    const stream = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      stream: true,
+      messages: [
+        { role: "system", content: `You are an assistant for answering customer questions about QuellWerke. Use only the provided context. ${lengthHint}`},
+        { role: "user", content: `Question: ${query}\n\nContext:\n${context}\n\nAnswer:` },
+      ],
+    });
 
+    req.on("close", () => {
+      try { stream.controller?.abort?.(); } catch {}
+    });
+
+    for await (const chunk of stream) {
+      const delta = chunk.choices?.[0]?.delta?.content;
+      if (delta) {
+        res.write(JSON.stringify({ delta }) + "\n");
+      }
+    }
+
+    // 5) Send simple "citations" at the end
+    res.write(JSON.stringify({
+      sources: textFromDb.rows.map(r => ({
+        title: `Doc ${r.doc_id} (chunk ${r.chunk_index})`,
+        url: `db://${r.doc_id}#${r.chunk_index}`,
+      }))
+    }) + "\n");
+
+    res.end();
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "server error" });
+    if (!res.headersSent) {
+      res.status(500).end(JSON.stringify({ error: "server error" }) + "\n");
+    } else {
+      res.write(JSON.stringify({ error: "server error" }) + "\n");
+      res.end();
+    }
   }
 });
+
+
 async function ensureCollection(name, vectorSize) {
   try {
     await axios.get(`http://qdrant:6333/collections/${name}`);

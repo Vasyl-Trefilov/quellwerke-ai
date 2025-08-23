@@ -10,24 +10,24 @@ services:
       - PGUSER=myuser
       - PGPASSWORD=mypassword
       - DATABASE_URL=postgres://myuser:mypassword@postgres:5432/mydb
-      - OPENAI_API_KEY=sk-...
-      - PARSER_URL=http://parser:4000   
+      - OPENAI_API_KEY=sk-xxxx
+      - PARSER_URL=http://parser:4000
     depends_on:
       - qdrant
       - ollama
       - postgres
-      - parser                       
+      - parser
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command: ["sh", "./entrypoint.sh"]
 
-  parser:                               
-    build: 
+  parser:
+    build:
       context: ./axum-crawler
-      dockerfile: Dockerfile    
-    network_mode: host              
+      dockerfile: Dockerfile
+    network_mode: host
     ports:
-      - "4000:4000"                     
+      - "4000:4000"
     environment:
       - PGHOST=localhost
       - PGPORT=5432
@@ -35,8 +35,8 @@ services:
       - PGUSER=myuser
       - PGPASSWORD=mypassword
       - DATABASE_URL=postgres://myuser:mypassword@localhost:5432/mydb
-      - QDRANT_URL=http://localhost:6333 
-      - OLLAMA_URL=http://localhost:11434   
+      - QDRANT_URL=http://localhost:6333
+      - OLLAMA_URL=http://localhost:11434
     depends_on:
       - qdrant
       - postgres
