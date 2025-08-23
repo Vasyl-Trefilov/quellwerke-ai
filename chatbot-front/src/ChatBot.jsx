@@ -45,6 +45,7 @@ function ProviderSelector({ provider, setProvider }) {
 }
 
 export default function Chatbot() {
+  // --- STATE ---
   const [messages, setMessages] = useState([
     {
       role: "bot",
@@ -52,51 +53,57 @@ export default function Chatbot() {
       content: "👋 Hi! I’m your assistant. How can I help you?",
     },
   ]);
-  const [input, setInput] = useState("");
-  const [provider, setProvider] = useState("openai"); // current Ai
-  const [loading, setLoading] = useState(false);
-  const [compareMode, setCompareMode] = useState(false); // To make request to both Ai in same time
-  const [error, setError] = useState("");
-  const [ragUrl, setRagUrl] = useState("https://www.quellwerke.de"); // base user for rust crawler ( pls input without other routes, only main page )
-  const [ragLang, setRagLang] = useState("de");
-  const [ragTitle, setRagTitle] = useState("QuellWerke");
-  const [loraSettings, setLoraSettings] = useState({
-    max_new_tokens: 600, // maximum tokens the model will generate
-    // (increase if you get mid-sentence cutoffs,
-    // decrease if it's "rambling too much"
+  const [input, setInput] = useState(""); // user input in text field
+  const [provider, setProvider] = useState("openai"); // current AI provider ("openai" | "company")
+  const [loading, setLoading] = useState(false); // loading state while waiting for AI response
+  const [compareMode, setCompareMode] = useState(false); // run both providers at once and compare outputs
+  const [error, setError] = useState(""); // error message to display in chat
+  const [ragUrl, setRagUrl] = useState("https://www.quellwerke.de"); // base URL for crawling (no subroutes)
+  const [ragLang, setRagLang] = useState("de"); // language for RAG
+  const [ragTitle, setRagTitle] = useState("QuellWerke"); // title of parsed website
 
-    temperature: 0.7, // randomness (lower = more deterministic)
-    top_p: 0.9, // nucleus sampling: only keep top p=90% probs
-    top_k: 50, // (optional) sample only from top-k tokens
-    repetition_penalty: 1.2, // >1.0 discourages repeating same phrases
+  // LoRA model settings (fine-tuned model)
+  const [loraSettings, setLoraSettings] = useState({
+    max_new_tokens: 600, // maximum tokens the model can generate
+    temperature: 0.7, // randomness (0 = deterministic)
+    top_p: 0.9, // nucleus sampling (keep top 90% probs)
+    top_k: 50, // consider only top-k tokens
+    repetition_penalty: 1.2, // discourage repeated phrases
   });
+
+  // OpenAI model settings
   const [openAiSettings, setOpenAiSettings] = useState({
-    answer_length: null, // null for auto answer lenght
+    answer_length: null, // null = auto length, otherwise "short" | "medium" | "long"
   });
-  const [showAiSettings, setShowAiSettings] = useState(false); // Show modeal window with Ai settings
+
+  const [showAiSettings, setShowAiSettings] = useState(false); // toggle modal with AI settings
   const closeAiSettings = () => {
-    // For future model window animation
-    setShowAiSettings(false);
+    setShowAiSettings(false); // close modal (can add animations later)
   };
 
-  const abortRef = useRef(null);
-  const messagesEndRef = useRef(null);
+  // --- REFS ---
+  const abortRef = useRef(null); // reference to abort controller (for stopping requests)
+  const messagesEndRef = useRef(null); // reference to last message (for auto-scroll)
 
+  // --- ENDPOINTS ---
   const endpoints = useMemo(
     () => ({
-      openai: "http://localhost:3000/search",
-      company: "http://localhost:8000/generate",
-      parser: "http://localhost:4000/parser/parse-url",
+      openai: "http://localhost:3000/search", // OpenAI backend
+      company: "http://localhost:8000/generate", // LoRA company model backend
+      parser: "http://localhost:4000/parser/parse-url", // crawler/parser backend
     }),
     []
   );
 
+  // Auto-scroll to bottom when messages update
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Add new message to chat history
   const addMessage = (msg) => setMessages((prev) => [...prev, msg]);
 
+  // Stop active request (if user clicks "Stop")
   const clearAbort = () => {
     if (abortRef.current) {
       try {
@@ -106,6 +113,7 @@ export default function Chatbot() {
     }
   };
 
+  // Parse + crawl user-provided website (store in Postgres + Qdrant)
   const handleParse = async () => {
     setError("");
     try {
@@ -130,33 +138,39 @@ export default function Chatbot() {
       });
     }
   };
+
+  // OpenAI token cost rates ($ per 1M tokens)
   const openaiRates = {
     "gpt-4o-mini": { input: 0.15 / 1_000_000, output: 0.6 / 1_000_000 },
     "gpt-4o": { input: 2.5 / 1_000_000, output: 10 / 1_000_000 },
   };
 
+  // Count tokens using tokenizer
   function countTokens(text) {
     return enc.encode(text).length;
   }
 
+  // Estimate API cost for given input/output tokens
   function estimateCost(model, inputTokens, outputTokens) {
     const rate = openaiRates[model];
     if (!rate) return undefined;
     return inputTokens * rate.input + outputTokens * rate.output;
   }
 
+  // Build request body depending on provider
   const buildPayload = (prov, text) =>
     prov === "openai"
       ? { query: text, provider: "openai", settings: openAiSettings }
       : { question: text, settings: loraSettings };
 
+  // Stream answer from backend (OpenAI or LoRA)
   const streamAnswer = async (prov, text, model = "gpt-4o-mini") => {
     const url = endpoints[prov];
     const controller = new AbortController();
     abortRef.current = controller;
     const meta = { startedAt: Date.now(), tokens: undefined, cost: undefined };
 
-    // 🔥 add message first and capture its index
+    // Add placeholder message with "streaming" state
     let newIdx;
     setMessages((prev) => {
       const idx = prev.length;
@@ -168,7 +182,6 @@ export default function Chatbot() {
     });
 
     let stop = false;
-    // estimate input tokens
     let inputTokens =
       prov === "openai"
         ? countTokens(JSON.stringify(buildPayload(prov, text)))
@@ -176,6 +189,7 @@ export default function Chatbot() {
     let outputTokens = 0;
 
     try {
+      // Send request to backend
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -185,6 +199,7 @@ export default function Chatbot() {
 
       if (!res.body) throw new Error("No response body");
 
+      // Read streaming response
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let full = "";
@@ -196,6 +211,7 @@ export default function Chatbot() {
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
 
+        // Split into lines for incremental JSON parsing
         let lines = buffer.split("\n");
         buffer = lines.pop();
 
@@ -204,19 +220,24 @@ export default function Chatbot() {
           if (!trimmed) continue;
           try {
             const j = JSON.parse(trimmed);
+
+            // Append text chunks
             if (typeof j.delta === "string") {
               full += j.delta;
               if (prov === "openai") outputTokens += countTokens(j.delta);
             }
+
+            // Collect metadata (sources, usage, cost)
             if (Array.isArray(j.sources)) sources = j.sources;
             if (j.done === true) stop = true;
-            if (j.usage) meta.tokens = j.usage?.tokens; // if API sends usage
-            if (j.cost) meta.cost = j.cost; // if API sends cost
+            if (j.usage) meta.tokens = j.usage?.tokens;
+            if (j.cost) meta.cost = j.cost;
           } catch (err) {
             console.error("JSON parse error:", err, trimmed);
           }
         }
 
+        // Update message content in real-time
         setMessages((prev) => {
           const copy = [...prev];
           if (copy[newIdx])
@@ -227,7 +248,7 @@ export default function Chatbot() {
         if (stop) break;
       }
 
-      // ✅ finalize tokens & cost if OpenAI
+      // Finalize token + cost stats (OpenAI only)
       if (prov === "openai") {
         meta.tokens = {
           input: inputTokens,
@@ -237,6 +258,7 @@ export default function Chatbot() {
         meta.cost = estimateCost(model, inputTokens, outputTokens);
       }
 
+      // Save latency + mark streaming as finished
       const latency = Date.now() - meta.startedAt;
       setMessages((prev) => {
         const copy = [...prev];
@@ -249,6 +271,7 @@ export default function Chatbot() {
         return copy;
       });
     } catch (e) {
+      // Handle abort or error
       if (e.name === "AbortError") {
         setMessages((prev) => {
           const copy = [...prev];
@@ -271,27 +294,31 @@ export default function Chatbot() {
     }
   };
 
+  // Handle sending message (user → AI)
   const sendMessage = async () => {
-    if (!input.trim() || loading) return;
+    if (!input.trim() || loading) return; // prevent empty or double send
     setError("");
     setLoading(true);
-    const userText = input.trim();
-    setInput("");
 
+    const userText = input.trim();
+    setInput(""); // clear input field
     addMessage({ role: "user", content: userText });
 
+    // Compare mode = send to both providers
     if (compareMode) {
       await Promise.all([
         streamAnswer("openai", userText),
         streamAnswer("company", userText),
       ]).catch(() => {});
     } else {
+      // Normal mode = send to single provider
       await streamAnswer(provider, userText);
     }
 
     setLoading(false);
   };
 
+  // Stop streaming response
   const stop = () => clearAbort();
 
   const ProviderTag = ({ id }) => (

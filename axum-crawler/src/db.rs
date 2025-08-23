@@ -1,6 +1,7 @@
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use dotenv::dotenv;
 
+// Postgres initialization 
 pub async fn init_db() -> Pool<Postgres> {
     dotenv().ok();
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");

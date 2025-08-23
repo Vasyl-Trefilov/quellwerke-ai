@@ -19,7 +19,7 @@ model, tokenizer = FastLanguageModel.from_pretrained(
     device_map="auto",            # auto-place layers across GPUs/CPU
 )
 
-# Load your fine-tuned LoRA adapter
+# Load fine-tuned LoRA adapter
 model.load_adapter("llama3.2-3b-quellwerke-lora-final")
 
 # ===========================

@@ -4,15 +4,23 @@ use axum::{
     Extension, Json, Router,
     http::StatusCode,
 };
+
+// Used to convert data => json and reverse
 use serde::{Deserialize, Serialize};
+
+// Used to create SQL requests 
 use sqlx::PgPool;
 use std::sync::Arc;
 use reqwest::Client;
+
+// handel json 
 use serde_json::json;
 use crate::route;
 
+// As i said we use this state on the hole project 
 use crate::state::AppState;
 
+// Debug used to allow logging, Clone is allowing to clone, Deserialize to convert json => data(when we receive json body)
 #[derive(Debug, Deserialize, Clone)]
 pub struct CrawlRequest {
     url: String,
@@ -20,28 +28,39 @@ pub struct CrawlRequest {
     title: String,
 }
 
+// Serialize converting data => json(to send response in json format)
 #[derive(Debug, Serialize)]
 pub struct CrawlResponse {
     chunks: usize,
 }
 
+// routes from this file, so every route will be /parser/{route_name}
 pub fn parser_routes(state: Arc<AppState>) -> Router {
     Router::new()
         .route("/parse-url", post(crawl_url))
         .layer(Extension(state))
 }
 
+/*  
+    receive the MAIN url 
+    example: https://example.com NOT https://example.com/something, pls only main one
+    land and title just for database, maybe used for analytics 
+*/
 async fn crawl_url(
     Extension(state): Extension<Arc<AppState>>,
     Json(payload): Json<CrawlRequest>,
 ) -> Result<Json<CrawlResponse>, (StatusCode, String)> {
+    // getting db 
     let pool: &PgPool = &state.db;
+
+    // creating client to make request( like axios in js )
     let client = Client::new();
 
+    // parsing ulrs and creating chunks for future inserting in DBs  
     let result = route::parserhandler::crawl_site(&payload.url, 200).await;
     println!("Crawled {} pages, got {} chunks", result.pages, result.chunks.len());
 
-    // ---- Insert into documents ----
+    // Insert into documents and return doc_id to use it in next DBs requests
     let row: (i32,) = sqlx::query_as(
         r#"
         INSERT INTO documents (source_type, source_uri, title, lang)
@@ -59,7 +78,7 @@ async fn crawl_url(
 
     let doc_id = row.0;
 
-    // ---- Ensure Qdrant collection exists ----
+    // Ensure Qdrant collection exists( good thing if you testing clear docker a lot of times )
     let qdrant_url = "http://localhost:6333";
     let collection_name = "kb_v1";
     let res = client
@@ -68,6 +87,7 @@ async fn crawl_url(
         .await
         .map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
 
+    // Creating collection FOR 768 DIMENSIONS!!! if you use other embedding model for vector pls, write correct number of dimensions below
     if res.status() == StatusCode::NOT_FOUND {
         client.put(format!("{}/collections/{}", qdrant_url, collection_name))
             .json(&json!({
@@ -89,6 +109,7 @@ async fn crawl_url(
         .enumerate()
         .collect();
 
+    // sadly this will not give big difference, bc of fucking docker, but if you use it on localhost, without docker it will make really big difference, this is threads btw
     let concurrency = 5; // adjust based on resources
 
     stream::iter(chunks)
@@ -99,7 +120,9 @@ async fn crawl_url(
             async move {
                 println!("Inserting chunk {} ({} chars)", i + 1, chunk.chars().count());
 
-                // ---- request embedding from Ollama ----
+                // request embedding from Ollama via Ollama server, but you can also use std::process::Command to run model one time, BUT I am not recommending to do this when you make a lot of requests, only for rare one time requests to save RAM( money for hosting )
+                // can be switched to OpenAi version, for example text-embedding-3-small or text-embedding-3-large, this will reduce RAM usage, but will cost some money
+                // I recommend using local model to not depending on Api and embedding model like that uses really low RAM, something around 200mb, this is not a big deal and its much faster then OpenAi, bc working local
                 let emb_res = client.post("http://localhost:11435/api/embeddings")
                     .json(&json!({
                         "model": "nomic-embed-text:v1.5",
@@ -109,14 +132,16 @@ async fn crawl_url(
                     .await
                     .map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
 
+                // converting vector to json format
                 let emb_json: serde_json::Value = emb_res.json()
                     .await
                     .map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
 
+                // converting back to vector, bc why not 
                 let vector = emb_json["embedding"].as_array()
                     .ok_or((StatusCode::BAD_GATEWAY, "missing embedding".to_string()))?;
 
-                // ---- Insert chunk into Postgres ----
+                // Insert chunk into Postgres and return chunk_id to create chunk in Qdrant with same id
                 let row: (i32,) = sqlx::query_as(
                     r#"
                     INSERT INTO chunks (doc_id, chunk_index, text, tokens, embedding_version)
@@ -134,6 +159,7 @@ async fn crawl_url(
                 .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
                 let chunk_id = row.0;
+                // creating preview, to search for text manually if needed, but not saving the hole text to leave high performance
                 let preview: String = chunk.chars().take(50).collect();
 
                 // ---- Insert into Qdrant ----
