@@ -42,25 +42,7 @@ The goal: **compare a lightweight, specialized LoRA model** vs. **a general-purp
 
 ```
 
-```mermaid
----
-config:
-  theme: neo-dark
----
-flowchart TD
-    A["Frontend (React, Vercel)"]
-    A -->|User question + settings| B["Node.js API"]
-    B -->|Embed query| C["Qdrant Vector DB"]
-    B -->|Ai settings| E
-    C -->|Find similar chunks| D["Postgres DB"]
-    D -->|Return context| E["OpenAI GPT API"]
-    E -->|Final GPT+RAG Answer| A
-    A -->|User selects LoRA + settings| F["FastAPI + LoRA Model"]
-    F -->|LoRA Answer| A
-    A -->|Crawl request| G["Axum Crawler (Rust)"]
-    G -->|Parse website| D
-    G -->|Store vectors| C
-```
+![System Architecture](./docs/architecture.svg)
 
 ---
 
