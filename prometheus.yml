@@ -1,0 +1,17 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: "parser"
+    static_configs:
+      - targets: ["parser:4000"]
+  - job_name: "nodeqdrant"
+    static_configs:
+      - targets: ["nodeqdrant:3000"]
+  - job_name: "lora"
+    static_configs:
+      - targets: ["lora:8000"]

@@ -1,16 +1,17 @@
 const express = require("express");
 const axios = require("axios");
+const client = require("prom-client");
 const { crawlSite } = require("./parser");
-const fs = require('fs');
+const fs = require("fs");
 async function loadPLimit() {
   const { default: pLimit } = await import("p-limit");
   return pLimit;
 }
 require("dotenv").config();
-const OpenAI  = require("openai");
+const OpenAI = require("openai");
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const cors = require("cors")
+const cors = require("cors");
 
 const { Pool } = require("pg");
 
@@ -25,10 +26,36 @@ const db = {
 
 const app = express();
 app.use(express.json());
-app.use(cors())
+app.use(cors());
 // const OLLAMA_HOST = "http://localhost:11434/api/embeddings";
 const OLLAMA_HOST = "http://ollama:11434/api/embeddings";
 const QDRANT_URL = "http://qdrant:6333";
+
+const collectDefaultMetrics = client.collectDefaultMetrics;
+collectDefaultMetrics();
+
+const httpRequestDuration = new client.Histogram({
+  name: "http_request_duration_seconds",
+  help: "Duration of HTTP requests in seconds",
+  labelNames: ["method", "route", "status_code"],
+});
+
+app.use((req, res, next) => {
+  const end = httpRequestDuration.startTimer();
+  res.on("finish", () => {
+    end({ method: req.method, route: req.path, status_code: res.statusCode });
+  });
+  next();
+});
+
+app.get("/metrics", async (req, res) => {
+  res.set("Content-Type", client.register.contentType);
+  res.end(await client.register.metrics());
+});
+
+app.get("/hello", (req, res) => {
+  res.json({ message: "Hello, World!" });
+});
 
 app.post("/search", async (req, res) => {
   const { query, settings } = req.body;
@@ -58,20 +85,26 @@ app.post("/search", async (req, res) => {
     }
 
     // 3) Pull chunks from Postgres
-    const ids = hits.map(r => r.id);
+    const ids = hits.map((r) => r.id);
     const textFromDb = await db.query(
       `SELECT * FROM chunks WHERE chunk_id = ANY($1::int[])`,
       [ids]
     );
 
     const context = textFromDb.rows
-      .map(r => `[Doc ${r.doc_id}, Chunk ${r.chunk_index}]\n${r.text}`)
+      .map((r) => `[Doc ${r.doc_id}, Chunk ${r.chunk_index}]\n${r.text}`)
       .join("\n---\n");
     let lengthHint = "";
     switch (settings?.answer_length) {
-      case "short":  lengthHint = "Keep the answer brief, 1-2 sentences."; break;
-      case "medium": lengthHint = "Provide a balanced, 2-3 paragraph answer."; break;
-      case "long":   lengthHint = "Provide a very detailed, comprehensive answer."; break;
+      case "short":
+        lengthHint = "Keep the answer brief, 1-2 sentences.";
+        break;
+      case "medium":
+        lengthHint = "Provide a balanced, 2-3 paragraph answer.";
+        break;
+      case "long":
+        lengthHint = "Provide a very detailed, comprehensive answer.";
+        break;
     }
 
     // 4) Stream OpenAI
@@ -79,13 +112,21 @@ app.post("/search", async (req, res) => {
       model: "gpt-4o-mini",
       stream: true,
       messages: [
-        { role: "system", content: `You are an assistant for answering customer questions about QuellWerke. Use only the provided context. ${lengthHint}`},
-        { role: "user", content: `Question: ${query}\n\nContext:\n${context}\n\nAnswer:` },
+        {
+          role: "system",
+          content: `You are an assistant for answering customer questions about QuellWerke. Use only the provided context. ${lengthHint}`,
+        },
+        {
+          role: "user",
+          content: `Question: ${query}\n\nContext:\n${context}\n\nAnswer:`,
+        },
       ],
     });
 
     req.on("close", () => {
-      try { stream.controller?.abort?.(); } catch {}
+      try {
+        stream.controller?.abort?.();
+      } catch {}
     });
 
     for await (const chunk of stream) {
@@ -96,12 +137,14 @@ app.post("/search", async (req, res) => {
     }
 
     // 5) Send simple "citations" at the end
-    res.write(JSON.stringify({
-      sources: textFromDb.rows.map(r => ({
-        title: `Doc ${r.doc_id} (chunk ${r.chunk_index})`,
-        url: `db://${r.doc_id}#${r.chunk_index}`,
-      }))
-    }) + "\n");
+    res.write(
+      JSON.stringify({
+        sources: textFromDb.rows.map((r) => ({
+          title: `Doc ${r.doc_id} (chunk ${r.chunk_index})`,
+          url: `db://${r.doc_id}#${r.chunk_index}`,
+        })),
+      }) + "\n"
+    );
 
     res.end();
   } catch (err) {
@@ -115,7 +158,6 @@ app.post("/search", async (req, res) => {
   }
 });
 
-
 async function ensureCollection(name, vectorSize) {
   try {
     await axios.get(`http://qdrant:6333/collections/${name}`);
@@ -126,18 +168,18 @@ async function ensureCollection(name, vectorSize) {
       await axios.put("http://qdrant:6333/collections/kb_v1", {
         vectors: {
           size: 768,
-          distance: "Cosine"
+          distance: "Cosine",
         },
         optimizers_config: {
-          default_segment_number: 2
+          default_segment_number: 2,
         },
         params: {
-          on_disk_payload: true
+          on_disk_payload: true,
         },
         hnsw_config: {
           m: 16,
-          ef_construct: 100
-        }
+          ef_construct: 100,
+        },
       });
     } else {
       throw err;

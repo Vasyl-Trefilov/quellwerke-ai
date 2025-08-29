@@ -1,4 +1,31 @@
 services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090" # Открываем порт для доступа к веб-интерфейсу
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml # Монтируем нашу конфигурацию
+      - prometheus_data:/prometheus # Постоянное хранилище для данных
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    restart: unless-stopped
+
+  # Сервис Grafana
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: grafana
+    ports:
+      - "5000:5000" # Веб-интерфейс Grafana будет на порту 5000
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin # Задаем пароль для admin (по умолчанию логин: admin, пароль: admin)
+      - GF_SERVER_HTTP_PORT=5000
+    volumes:
+      - grafana_data:/var/lib/grafana # Постоянное хранилище для дашбордов и настройек Grafana
+    restart: unless-stopped
+    depends_on:
+      - prometheus # Grafana запустится после Prometheus
   nodeqdrant:
     build: ./nodeQdrant
     ports:
@@ -12,34 +39,38 @@ services:
       - DATABASE_URL=postgres://myuser:mypassword@postgres:5432/mydb
       - OPENAI_API_KEY=sk-xxxx
       - PARSER_URL=http://parser:4000
-    depends_on:
-      - qdrant
-      - ollama
-      - postgres
-      - parser
+    # depends_on:
+    #   - qdrant
+    #   - ollama
+    #   - postgres
+    #   - parser
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    command: ["sh", "./entrypoint.sh"]
+    volumes:
+      - ./nodeQdrant:/app # Mount your local code into the container
+    command:
+      ["npm", "run", "dev"]
+      # command: ["sh", "./entrypoint.sh"]
 
   parser:
     build:
       context: ./axum-crawler
       dockerfile: Dockerfile
-    network_mode: host
     ports:
       - "4000:4000"
     environment:
-      - PGHOST=localhost
+      - PGHOST=postgres
       - PGPORT=5432
       - PGDATABASE=mydb
       - PGUSER=myuser
       - PGPASSWORD=mypassword
-      - DATABASE_URL=postgres://myuser:mypassword@localhost:5432/mydb
-      - QDRANT_URL=http://localhost:6333
-      - OLLAMA_URL=http://localhost:11434
+      - DATABASE_URL=postgres://myuser:mypassword@postgres:5432/mydb
+      - QDRANT_URL=http://qdrant:6333
+      - OLLAMA_URL=http://ollama:11434
     depends_on:
       - qdrant
       - postgres
+      - ollama
 
   lora:
     build: ./lora-server
@@ -91,3 +122,5 @@ services:
 volumes:
   ollama_data:
   postgres_data:
+  prometheus_data:
+  grafana_data:

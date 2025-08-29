@@ -11,3 +11,4 @@ uvicorn[standard]>=0.30.0
 # Optional but useful
 accelerate>=0.33.0   # for optimized inference
 bitsandbytes>=0.43.0 # needed if using load_in_4bit=True
+prometheus-fastapi-instrumentator>=7.1.0

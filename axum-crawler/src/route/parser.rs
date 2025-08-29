@@ -79,7 +79,7 @@ async fn crawl_url(
     let doc_id = row.0;
 
     // Ensure Qdrant collection exists( good thing if you testing clear docker a lot of times )
-    let qdrant_url = "http://localhost:6333";
+    let qdrant_url = "http://qdrant:6333";
     let collection_name = "kb_v1";
     let res = client
         .get(format!("{}/collections/{}", qdrant_url, collection_name))

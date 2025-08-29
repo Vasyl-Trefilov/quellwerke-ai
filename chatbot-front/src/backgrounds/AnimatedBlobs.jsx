@@ -8,7 +8,16 @@ const AnimatedBlobs = () => {
   ]);
 
   return (
-    <div style={{ position: "absolute", inset: 0, overflow: "hidden", zIndex: 4, pointerEvents: "none" }}>
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        overflow: "hidden",
+        zIndex: 4,
+        pointerEvents: "none",
+        // backgroundColor: "blue",
+      }}
+    >
       {blobs.map((b, i) => (
         <div
           key={i}
@@ -21,7 +30,9 @@ const AnimatedBlobs = () => {
             background: b.color,
             borderRadius: "50%",
             filter: "blur(100px)",
-            animation: `blobFloat ${12 + i * 4}s ease-in-out infinite alternate`,
+            animation: `blobFloat ${
+              12 + i * 4
+            }s ease-in-out infinite alternate`,
           }}
         ></div>
       ))}

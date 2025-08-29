@@ -7,6 +7,7 @@ from transformers import TextIteratorStreamer
 from unsloth import FastLanguageModel
 import uvicorn
 from typing import Any
+from prometheus_fastapi_instrumentator import Instrumentator
 
 # ===========================
 # Load model once on startup
@@ -110,6 +111,13 @@ async def generate(q: Query, request: Request):
             "Transfer-Encoding": "chunked",
         },
     )
+
+class HelloResponse(BaseModel):
+    message: str
+Instrumentator().instrument(app).expose(app)
+@app.get("/hello", response_model=HelloResponse)
+async def hello():
+    return HelloResponse(message="Hello, World!")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

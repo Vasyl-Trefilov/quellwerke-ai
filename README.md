@@ -205,7 +205,6 @@ For example, which GPU works best for 1B, 2B, 3B, or 7B models, and how to adjus
 
 - **Logs:** structured JSON logs for each service (request id, latency, errors).
 - **Metrics:** Prometheus + Grafana dashboard (RPS, p95 latency, token usage).
-- **Tracing:** OpenTelemetry (trace a request from frontend → RAG → OpenAI).
 
 ---
 

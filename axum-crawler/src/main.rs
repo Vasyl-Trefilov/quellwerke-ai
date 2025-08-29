@@ -8,9 +8,11 @@ use dotenv::dotenv;
 use tower_http::cors::{CorsLayer, Any};
 use axum::{http::{Method, header}};
 
+
 // This is just axum server version 0.8.4
 #[tokio::main]
 async fn main() {
+
     dotenv().ok();
     let pool = db::init_db().await;
 
