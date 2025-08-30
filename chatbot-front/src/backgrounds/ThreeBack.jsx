@@ -29,9 +29,18 @@ const ThreeBack = () => {
     const starCount = 6000;
     const starPositions = new Float32Array(starCount * 3);
 
-    for (let i = 0; i < starCount * 3; i++) {
-      // Random spread in space
-      starPositions[i] = (Math.random() - 0.5) * 200;
+    for (let i = 0; i < starCount; i++) {
+      const r = 200 + Math.random() * 1000; // radius of star sphere
+      const theta = Math.random() * Math.PI * 2; // azimuth
+      const phi = Math.acos(2 * Math.random() - 1); // polar
+
+      const x = r * Math.sin(phi) * Math.cos(theta);
+      const y = r * Math.sin(phi) * Math.sin(theta);
+      const z = r * Math.cos(phi);
+
+      starPositions[i * 3] = x;
+      starPositions[i * 3 + 1] = y;
+      starPositions[i * 3 + 2] = z;
     }
 
     starGeometry.setAttribute(
@@ -41,15 +50,16 @@ const ThreeBack = () => {
 
     const starMaterial = new THREE.PointsMaterial({
       color: 0xffffff,
-      size: 0.7,
+      size: 4, // make them bigger so you see them
       sizeAttenuation: true,
+      depthWrite: false, // prevent z-buffer hiding them
+      blending: THREE.AdditiveBlending, // stars glow
+      map: new THREE.TextureLoader().load("/textures/star.png"),
+      transparent: true,
     });
-    starMaterial.map = new THREE.TextureLoader().load("/textures/star.png");
-    starMaterial.transparent = true;
 
     const stars = new THREE.Points(starGeometry, starMaterial);
     scene.add(stars);
-
     // === Example central object (torus) ===
     // const geometry = new THREE.TorusKnotGeometry(1, 0.3, 128, 16);
     // const material = new THREE.MeshStandardMaterial({
@@ -77,8 +87,7 @@ const ThreeBack = () => {
       //   torusKnot.rotation.y += 0.01;
 
       // Slight starfield movement for "depth"
-      stars.rotation.x += 0.0005;
-      stars.rotation.y += 0.0007;
+      stars.rotation.y += 0.0004;
 
       renderer.render(scene, camera);
     };

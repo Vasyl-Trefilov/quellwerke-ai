@@ -189,7 +189,7 @@ These are typically provided via `docker-compose.yml` or `.env` files.
 I also provide **recommended hosting and LoRA settings for different PCs** depending on GPU, RAM, and model size.  
 For example, which GPU works best for 1B, 2B, 3B, or 7B models, and how to adjust batch size, sequence length, and precision.
 
-> Check the dedicated table / guide in `docs/hardware_settings.md` (or add it later) for detailed recommendations.
+> Check the dedicated table / guide in `docs/hardware_settings.md` for detailed recommendations.
 
 ---
 
@@ -219,6 +219,27 @@ For example, which GPU works best for 1B, 2B, 3B, or 7B models, and how to adjus
 | Deployment         | Needs GPU             | Anywhere (API)            | Lightweight binary  |
 
 ---
+
+## 🎨 3D Backgrounds
+
+This project includes a collection of **just-for-fun, toggle-able 3D backgrounds** powered by [Three.js](https://threejs.org/).  
+They’re playful experiments designed to make the UI more fun to explore 🚀
+
+### Available Backgrounds
+
+- 🌌 **ThreeSpace** — classic starfield space backdrop.
+- ☀️ **QWSpace** — solar system where:
+  - The **sun** is the company logo.
+  - The **planets** represent technologies the company uses.
+  - The **asteroids** represent the technologies that were used to build this project.
+- 🔵 **Uranus** — a tilted Uranus with dynamic lighting and a rotating starfield.
+- 🟩 **NeonCubes** — glowing cubes with real physics, bouncing around.
+- 🌧️ **Rain** — simple falling rain simulation.
+- 🫧 **Blobs** — smooth animated blob shapes.
+
+---
+
+💡 These backgrounds were made **just for fun**, but they also double as **teaching tools** — if you’re curious about how Three.js scenes, physics, and effects work, you can dive into the code and learn from each demo.
 
 ## License
 

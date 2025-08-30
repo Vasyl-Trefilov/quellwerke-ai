@@ -4,6 +4,9 @@ import AnimatedBlobs from "./backgrounds/AnimatedBlobs";
 import ThreeBack from "./backgrounds/ThreeBack";
 import TestBack from "./backgrounds/TestBack";
 import QWSpace from "./backgrounds/QWSpace";
+import NeonCubes from "./backgrounds/NeonCubes";
+import Rain from "./backgrounds/Rain";
+import BlackHole from "./backgrounds/BlackHole";
 
 const App = () => {
   const [currentBack, setCurrentBack] = useState("threeSpace");
@@ -16,6 +19,12 @@ const App = () => {
         return <AnimatedBlobs />;
       case "qwSpace":
         return <QWSpace />;
+      case "neonCubes":
+        return <NeonCubes />;
+      case "rain":
+        return <Rain />;
+      case "blackHole":
+        return <BlackHole />;
       case "test":
         return <TestBack />;
       default:
@@ -85,7 +94,7 @@ const App = () => {
         {/* chatbot container */}
         <div
           style={{
-            zIndex: 3, // 4 for animation over chatbot, 3 to have UI over anim
+            zIndex: 4, // 4 for animation over chatbot, 3 to have UI over anim
             top: "calc(15%)",
             position: "absolute",
             display: "flex",
@@ -133,7 +142,7 @@ const App = () => {
               border: "none",
               cursor: "pointer",
               background: currentBack === "qwSpace" ? "#65ffeaff" : "#333",
-              color: "#fff",
+              color: currentBack === "qwSpace" ? "#000" : "#fff",
               fontWeight: "bold",
             }}
           >
@@ -154,6 +163,48 @@ const App = () => {
             Blobs
           </button>
           <button
+            onClick={() => setCurrentBack("neonCubes")}
+            style={{
+              padding: "8px 14px",
+              borderRadius: "8px",
+              border: "none",
+              cursor: "pointer",
+              background: currentBack === "neonCubes" ? "#d500f9" : "#333",
+              color: currentBack === "neonCubes" ? "#000" : "#fff",
+              fontWeight: "bold",
+            }}
+          >
+            NeonCubes
+          </button>
+          <button
+            onClick={() => setCurrentBack("rain")}
+            style={{
+              padding: "8px 14px",
+              borderRadius: "8px",
+              border: "none",
+              cursor: "pointer",
+              background: currentBack === "rain" ? "#d500f9" : "#333",
+              color: currentBack === "rain" ? "#000" : "#fff",
+              fontWeight: "bold",
+            }}
+          >
+            Rain
+          </button>
+          <button
+            onClick={() => setCurrentBack("blackHole")}
+            style={{
+              padding: "8px 14px",
+              borderRadius: "8px",
+              border: "none",
+              cursor: "pointer",
+              background: currentBack === "blackHole" ? "#d500f9" : "#333",
+              color: currentBack === "blackHole" ? "#000" : "#fff",
+              fontWeight: "bold",
+            }}
+          >
+            Uranus
+          </button>
+          {/* <button
             onClick={() => setCurrentBack("test")}
             style={{
               padding: "8px 14px",
@@ -166,7 +217,7 @@ const App = () => {
             }}
           >
             Test
-          </button>
+          </button> */}
         </div>
       </div>
     </div>

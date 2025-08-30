@@ -30,9 +30,7 @@ const AnimatedBlobs = () => {
             background: b.color,
             borderRadius: "50%",
             filter: "blur(100px)",
-            animation: `blobFloat ${
-              12 + i * 4
-            }s ease-in-out infinite alternate`,
+            animation: `blobFloat ${6 + i * 4}s ease-in-out infinite alternate`,
           }}
         ></div>
       ))}
@@ -40,8 +38,8 @@ const AnimatedBlobs = () => {
       <style>{`
         @keyframes blobFloat {
           0%   { transform: translate(0px, 0px) scale(1); }
-          50%  { transform: translate(40px, -30px) scale(1.1); }
-          100% { transform: translate(-20px, 20px) scale(0.95); }
+          50%  { transform: translate(40px, -30px) scale(1.3); }
+          100% { transform: translate(-20px, 20px) scale(0.9); }
         }
       `}</style>
     </div>
