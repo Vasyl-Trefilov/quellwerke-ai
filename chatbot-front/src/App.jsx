@@ -7,6 +7,7 @@ import QWSpace from "./backgrounds/QWSpace";
 import NeonCubes from "./backgrounds/NeonCubes";
 import Rain from "./backgrounds/Rain";
 import BlackHole from "./backgrounds/BlackHole";
+import Mountains from "./backgrounds/Mountains";
 
 const App = () => {
   const [currentBack, setCurrentBack] = useState("threeSpace");
@@ -25,8 +26,10 @@ const App = () => {
         return <Rain />;
       case "blackHole":
         return <BlackHole />;
-      case "test":
-        return <TestBack />;
+      // case "mountains":
+      //   return <Mountains />;
+      // case "test":
+      //   return <TestBack />;
       default:
         return null;
     }
@@ -205,6 +208,20 @@ const App = () => {
             Uranus
           </button>
           {/* <button
+            onClick={() => setCurrentBack("mountains")}
+            style={{
+              padding: "8px 14px",
+              borderRadius: "8px",
+              border: "none",
+              cursor: "pointer",
+              background: currentBack === "mountains" ? "#d500f9" : "#333",
+              color: currentBack === "mountains" ? "#000" : "#fff",
+              fontWeight: "bold",
+            }}
+          >
+            Mountains
+          </button>
+          <button
             onClick={() => setCurrentBack("test")}
             style={{
               padding: "8px 14px",

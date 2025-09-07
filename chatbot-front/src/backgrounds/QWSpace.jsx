@@ -49,9 +49,9 @@ const QWSpace = () => {
     const starPositions = new Float32Array(starCount * 3);
 
     for (let i = 0; i < starCount; i++) {
-      const r = 200 + Math.random() * 1000; // radius of star sphere
-      const theta = Math.random() * Math.PI * 2; // azimuth
-      const phi = Math.acos(2 * Math.random() - 1); // polar
+      const r = 200 + Math.random() * 1000; 
+      const theta = Math.random() * Math.PI * 2; 
+      const phi = Math.acos(2 * Math.random() - 1); 
 
       const x = r * Math.sin(phi) * Math.cos(theta);
       const y = r * Math.sin(phi) * Math.sin(theta);
@@ -69,10 +69,10 @@ const QWSpace = () => {
 
     const starMaterial = new THREE.PointsMaterial({
       color: 0xffffff,
-      size: 4, // make them bigger so you see them
+      size: 4,
       sizeAttenuation: true,
-      depthWrite: false, // prevent z-buffer hiding them
-      blending: THREE.AdditiveBlending, // stars glow
+      depthWrite: false, 
+      blending: THREE.AdditiveBlending, 
       map: new THREE.TextureLoader().load("/textures/star.png"),
       transparent: true,
     });
@@ -110,7 +110,6 @@ const QWSpace = () => {
             roughness: 0.2,
           });
 
-          // Apply it to all meshes inside the model
           obj.traverse((child) => {
             if (child.isMesh) {
               child.material = customMat;
@@ -215,14 +214,12 @@ const QWSpace = () => {
 
       obj.position.copy(spawnPos);
 
-      // Velocity points roughly forward into the scene
       const velocity = new THREE.Vector3(
         (Math.random() - 0.5) * 0.001,
         (Math.random() - 0.5) * 0.001,
         -((0.5 + Math.random()) * 0.1)
       );
 
-      // Rotate velocity into camera space so they always fly "through" the camera view
       velocity.applyQuaternion(camera.quaternion);
 
       return velocity;
@@ -258,7 +255,6 @@ const QWSpace = () => {
         asteroid.obj.rotation.x += 0.02;
         asteroid.obj.rotation.y += 0.015;
 
-        // If it flies too far past the origin or too far from camera, recycle
         const distanceFromCamera = asteroid.obj.position.distanceTo(
           camera.position
         );

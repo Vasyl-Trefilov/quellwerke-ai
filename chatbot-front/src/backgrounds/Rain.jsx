@@ -31,7 +31,6 @@ const Rain = () => {
     light.position.set(10, 10, 10);
     scene.add(light);
 
-    // Cube mesh
     let objects = [];
 
     const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
@@ -44,7 +43,7 @@ const Rain = () => {
         const scaleX = Math.random() * 1.5 + 0.2;
         const scaleY = Math.random() + 0.2;
         drop.scale.set(scaleX, scaleY, scaleX);
-        const cubeSize = Math.random() * 1.5 + 0.2; // avoid size 0
+        const cubeSize = Math.random() * 1.5 + 0.2;
 
         // Random position
         drop.position.set(
@@ -55,8 +54,7 @@ const Rain = () => {
 
         scene.add(drop);
 
-        // Physics body with matching size
-        const radius = scaleY * 0.2; // adjust to match model proportions
+        const radius = scaleY * 0.2; 
         const body = new CANNON.Body({
           mass: 1,
           shape: new CANNON.Sphere(radius),
@@ -67,7 +65,6 @@ const Rain = () => {
           ),
         });
 
-        // Copy rotation so physics matches mesh
         body.quaternion.copy(drop.quaternion);
 
         world.addBody(body);
@@ -82,13 +79,12 @@ const Rain = () => {
     const world = new CANNON.World();
     world.gravity.set(0, -9, 4);
 
-    // Floor body
     // const floorBody = new CANNON.Body({
-    //   type: CANNON.Body.STATIC, // immovable
+    //   type: CANNON.Body.STATIC, 
     //   shape: new CANNON.Plane(),
     // });
     // floorBody.position.set(0, -10, 0);
-    // floorBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0); // rotate to lie flat
+    // floorBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
     // world.addBody(floorBody);
 
     // === Animation loop ===
@@ -97,7 +93,6 @@ const Rain = () => {
     function animate() {
       frameId = requestAnimationFrame(animate);
       if (Math.random() < 0.0005) {
-        // ~once every 5000 frames
         renderer.setClearColor(0xffffff);
         setTimeout(() => renderer.setClearColor(0x000000, 0), 100);
       }
@@ -106,13 +101,12 @@ const Rain = () => {
       const delta = clock.getDelta();
       world.step(1 / 30, delta, 3);
 
-      // Sync cube mesh to physics body
       objects.forEach((o) => {
         const vel = o.body.velocity.clone();
         if (vel.length() > 0.01) {
-          const axis = new CANNON.Vec3(0, -1, 0); // default "down"
+          const axis = new CANNON.Vec3(0, -1, 0); 
           const q = new CANNON.Quaternion();
-          q.setFromVectors(axis, vel.unit()); // rotate from down → velocity
+          q.setFromVectors(axis, vel.unit()); 
           o.drop.quaternion.copy(q);
         }
 

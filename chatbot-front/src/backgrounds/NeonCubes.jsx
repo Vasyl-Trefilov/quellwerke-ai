@@ -31,7 +31,6 @@ const NeonCubes = () => {
     light.position.set(10, 10, 10);
     scene.add(light);
 
-    // Floor mesh
     // const floorGeometry = new THREE.PlaneGeometry(1, 1);
     // const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
     // const floorMesh = new THREE.Mesh(floorGeometry, floorMaterial);
@@ -50,32 +49,28 @@ const NeonCubes = () => {
 
     // Floor body
     // const floorBody = new CANNON.Body({
-    //   type: CANNON.Body.STATIC, // immovable
+    //   type: CANNON.Body.STATIC,
     //   shape: new CANNON.Plane(),
     // });
     // floorBody.position.set(0, -10, 0);
-    // floorBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0); // rotate to lie flat
+    // floorBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0); 
     // world.addBody(floorBody);
     let objects = [];
     for (let i = 0; i < 50; i++) {
-      // Random cube size
       const cubeSize = Math.random() * 1.5 + 0.2; // avoid size 0
       const meshGeo = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
       const mesh = new THREE.Mesh(meshGeo, cubeMaterial.clone());
 
-      // Random emissive color
       mesh.material.emissive = new THREE.Color(
         `hsl(${Math.random() * 100 + 130}, 100%, 50%)`
       );
 
-      // Random position
       mesh.position.set(
         (Math.random() - 0.8) * 10,
         10 + i,
         (Math.random() - 0.5) * 10
       );
 
-      // Random rotation
       mesh.rotation.set(
         Math.random() * Math.PI,
         Math.random() * Math.PI,
@@ -84,7 +79,6 @@ const NeonCubes = () => {
 
       scene.add(mesh);
 
-      // Physics body with matching size
       const half = cubeSize / 2;
       const body = new CANNON.Body({
         mass: 1,
@@ -95,8 +89,6 @@ const NeonCubes = () => {
           mesh.position.z
         ),
       });
-
-      // Copy rotation so physics matches mesh
       body.quaternion.copy(mesh.quaternion);
 
       world.addBody(body);
@@ -109,11 +101,9 @@ const NeonCubes = () => {
     function animate() {
       frameId = requestAnimationFrame(animate);
 
-      // Step physics
       const delta = clock.getDelta();
       world.step(1 / 30, delta, 3);
 
-      // Sync cube mesh to physics body
       objects.forEach((o) => {
         if (o.body.position.y < -20) {
           o.body.position.set(

@@ -32,7 +32,7 @@ const BlackHole = () => {
     // controls.dampingFactor = 0.05;
     // controls.enablePan = true;
     // controls.enableZoom = true;
-    // controls.autoRotate = false; // set true if you want auto-spin
+    // controls.autoRotate = false; 
     // controls.autoRotateSpeed = 0.5;
     // const size = 500;
     // const divisions = 10;
@@ -49,24 +49,21 @@ const BlackHole = () => {
     loader.load("/models/uranus.glb", (gltf) => {
       uranus = gltf.scene;
 
-      // Load texture
 
       // uranus.traverse((child) => {
       //   if (child.isMesh) {
       //     child.material = new THREE.MeshStandardMaterial({
-      //       color: 0x88ccff, // base color (light-blue for Uranus)
-      //       metalness: 1, // very metallic
-      //       roughness: 0.5, // medium shiny
+      //       color: 0x88ccff, 
+      //       metalness: 1, 
+      //       roughness: 0.5, 
       //     });
       //   }
       // });
 
-      // Apply tilt to the mesh itself
       // uranus.rotation.z = Math.PI / 3;
       uranus.rotation.x = -Math.PI / 2;
       uranus.scale.set(0.3, 0.3, 0.3);
       uranus.position.set(0, -100, 0);
-      // Add mesh into group (pivot)
       uranusGroup.add(uranus);
     });
 
@@ -75,9 +72,9 @@ const BlackHole = () => {
     const starPositions = new Float32Array(starCount * 3);
 
     for (let i = 0; i < starCount; i++) {
-      const r = 500 + Math.random() * 1500; // radius of star sphere
-      const theta = Math.random() * Math.PI * 2; // azimuth
-      const phi = Math.acos(2 * Math.random() - 1); // polar
+      const r = 500 + Math.random() * 1500; 
+      const theta = Math.random() * Math.PI * 2; 
+      const phi = Math.acos(2 * Math.random() - 1); 
 
       const x = r * Math.sin(phi) * Math.cos(theta);
       const y = r * Math.sin(phi) * Math.sin(theta);
@@ -95,10 +92,10 @@ const BlackHole = () => {
 
     const starMaterial = new THREE.PointsMaterial({
       color: 0xffffff,
-      size: 4, // make them bigger so you see them
+      size: 4, 
       sizeAttenuation: true,
-      depthWrite: false, // prevent z-buffer hiding them
-      blending: THREE.AdditiveBlending, // stars glow
+      depthWrite: false, 
+      blending: THREE.AdditiveBlending, 
       map: new THREE.TextureLoader().load("/textures/star.png"),
       transparent: true,
     });
@@ -107,19 +104,16 @@ const BlackHole = () => {
     scene.add(stars);
 
     // === Lights ===
-    // Sunlight (main directional)
     // const sunLight = new THREE.DirectionalLight(0xffffff, 0.4);
     // sunLight.position.set(100, 500, 100);
     // scene.add(sunLight);
     // scene.add(new THREE.DirectionalLightHelper(sunLight, 50, 0xffcc00));
 
-    // // Fill light
     // const fillLight = new THREE.DirectionalLight(0x88aaff, 0.5);
     // fillLight.position.set(-300, -200, -100);
     // scene.add(fillLight);
     // scene.add(new THREE.DirectionalLightHelper(fillLight, 30, 0x88aaff));
 
-    // Rim light
     const rimLight = new THREE.DirectionalLight(0xffffff, 1);
     rimLight.position.set(-200, 300, -300);
 
@@ -133,11 +127,9 @@ const BlackHole = () => {
     scene.add(rimLight);
     // scene.add(new THREE.DirectionalLightHelper(rimLight, 40, 0x66ccff));
 
-    // Ambient boost
     const ambient = new THREE.AmbientLight(0x222233, 0.4);
     scene.add(ambient);
 
-    // Hemisphere light (sky/ground mix)
     const hemiLight = new THREE.HemisphereLight(0x6666ff, 0x222200, 0.4);
     scene.add(hemiLight);
     // scene.add(new THREE.HemisphereLightHelper(hemiLight, 60));
@@ -151,7 +143,7 @@ const BlackHole = () => {
       // controls.update();
 
       if (uranus) {
-        uranusGroup.rotation.y += 0.0005; // clean spin around world Y
+        uranusGroup.rotation.y += 0.0005; 
       }
 
       renderer.render(scene, camera);
@@ -188,7 +180,7 @@ const BlackHole = () => {
         inset: 0,
         overflow: "hidden",
         zIndex: 4,
-        pointerEvents: "auto", // enable mouse controls
+        pointerEvents: "auto", 
       }}
     />
   );

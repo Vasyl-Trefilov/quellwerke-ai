@@ -144,6 +144,7 @@ pub async fn crawl_site(base_url: &str, max_pages: usize) -> CrawlResult {
                         return (url, None, Vec::new());
                     }
                     if let Ok(body) = resp.text().await {
+                        println!("parsing {}", url.clone());
                         // extract and chunk text
                         let texts = extract_text(&body);
                         let chunks = chunk_paragraphs(texts, 3000, 300);

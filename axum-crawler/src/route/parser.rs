@@ -50,6 +50,7 @@ async fn crawl_url(
     Extension(state): Extension<Arc<AppState>>,
     Json(payload): Json<CrawlRequest>,
 ) -> Result<Json<CrawlResponse>, (StatusCode, String)> {
+    println!("Request came");
     // getting db 
     let pool: &PgPool = &state.db;
 
@@ -123,7 +124,7 @@ async fn crawl_url(
                 // request embedding from Ollama via Ollama server, but you can also use std::process::Command to run model one time, BUT I am not recommending to do this when you make a lot of requests, only for rare one time requests to save RAM( money for hosting )
                 // can be switched to OpenAi version, for example text-embedding-3-small or text-embedding-3-large, this will reduce RAM usage, but will cost some money
                 // I recommend using local model to not depending on Api and embedding model like that uses really low RAM, something around 200mb, this is not a big deal and its much faster then OpenAi, bc working local
-                let emb_res = client.post("http://localhost:11435/api/embeddings")
+                let emb_res = client.post("http://localhost:11434/api/embeddings")
                     .json(&json!({
                         "model": "nomic-embed-text:v1.5",
                         "prompt": chunk
