@@ -1,0 +1,25 @@
+FROM rust:latest
+
+WORKDIR /app
+
+# Install development tools
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    netcat-traditional \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install cargo-watch for live reload
+RUN cargo install cargo-watch
+
+# Copy entrypoint script
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
+
+# Copy source code
+COPY . .
+
+# Expose port
+EXPOSE 4000
+
+# Use the entrypoint script for development
+CMD ["/app/docker-entrypoint.sh", "dev"]

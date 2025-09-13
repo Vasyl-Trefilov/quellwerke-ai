@@ -2,4 +2,3 @@ node_modules/
 .env
 data.json 
 package-lock.json
-Dockerfile

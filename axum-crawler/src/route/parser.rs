@@ -14,6 +14,7 @@ use std::sync::Arc;
 use reqwest::Client;
 
 // handel json 
+use serde_json;
 use serde_json::json;
 use crate::route;
 
@@ -60,7 +61,14 @@ async fn crawl_url(
     // parsing ulrs and creating chunks for future inserting in DBs  
     let result = route::parserhandler::crawl_site(&payload.url, 200).await;
     println!("Crawled {} pages, got {} chunks", result.pages, result.chunks.len());
+    
+    // let json = serde_json::to_string_pretty(&result.chunks)
+    //     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("JSON serialization error: {}", e)))?;
 
+    // tokio::fs::write("output.json", json).await
+    //     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("File write error: {}", e)))?;
+    
+    println!("Wrote output");
     // Insert into documents and return doc_id to use it in next DBs requests
     let row: (i32,) = sqlx::query_as(
         r#"
@@ -79,7 +87,7 @@ async fn crawl_url(
 
     let doc_id = row.0;
 
-    // Ensure Qdrant collection exists( good thing if you testing clear docker a lot of times )
+    // Ensure Qdrant collection exists( good thing if you testing clear docker a lot of times ) qdrant
     let qdrant_url = "http://qdrant:6333";
     let collection_name = "kb_v1";
     let res = client
@@ -124,7 +132,7 @@ async fn crawl_url(
                 // request embedding from Ollama via Ollama server, but you can also use std::process::Command to run model one time, BUT I am not recommending to do this when you make a lot of requests, only for rare one time requests to save RAM( money for hosting )
                 // can be switched to OpenAi version, for example text-embedding-3-small or text-embedding-3-large, this will reduce RAM usage, but will cost some money
                 // I recommend using local model to not depending on Api and embedding model like that uses really low RAM, something around 200mb, this is not a big deal and its much faster then OpenAi, bc working local
-                let emb_res = client.post("http://localhost:11434/api/embeddings")
+                let emb_res = client.post("http://ollama:11434/api/embeddings")
                     .json(&json!({
                         "model": "nomic-embed-text:v1.5",
                         "prompt": chunk
@@ -139,8 +147,13 @@ async fn crawl_url(
                     .map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
 
                 // converting back to vector, bc why not 
-                let vector = emb_json["embedding"].as_array()
-                    .ok_or((StatusCode::BAD_GATEWAY, "missing embedding".to_string()))?;
+                let vector: Vec<f64> = emb_json["embedding"]
+                    .as_array()
+                    .ok_or((StatusCode::BAD_GATEWAY, "missing embedding".to_string()))?
+                    .iter()
+                    .map(|v| v.as_f64().unwrap_or(0.0))  // or return error if any value is not f64
+                    .collect();
+
 
                 // Insert chunk into Postgres and return chunk_id to create chunk in Qdrant with same id
                 let row: (i32,) = sqlx::query_as(
@@ -164,7 +177,9 @@ async fn crawl_url(
                 let preview: String = chunk.chars().take(50).collect();
 
                 // ---- Insert into Qdrant ----
-                client.put(format!("{}/collections/{}/points", qdrant_url, collection_name))
+               // ---- Insert into Qdrant ----
+                let res = client
+                    .put(format!("{}/collections/{}/points", qdrant_url, collection_name))
                     .json(&json!({
                         "points": [{
                             "id": chunk_id,
@@ -183,6 +198,17 @@ async fn crawl_url(
                     .send()
                     .await
                     .map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
+
+                // log status and body for debugging
+                let status = res.status();
+                let body = res.text().await.unwrap_or_else(|_| "<no body>".to_string());
+                println!("Qdrant insert response (status={}): {}", status, body);
+
+                // check for failure
+                if !status.is_success() {
+                    return Err((StatusCode::BAD_GATEWAY, format!("Qdrant insert failed: {}", body)));
+                }
+
 
                 Ok::<(), (StatusCode, String)>(())
             }

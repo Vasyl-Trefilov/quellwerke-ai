@@ -71,7 +71,28 @@ services:
       - qdrant
       - postgres
       - ollama
-
+  parser-dev:
+    build:
+      context: ./axum-crawler
+      dockerfile: Dockerfile.dev
+    ports:
+      - "4000:4000"
+    environment:
+      - PGHOST=postgres
+      - PGPORT=5432
+      - PGDATABASE=mydb
+      - PGUSER=myuser
+      - PGPASSWORD=mypassword
+      - DATABASE_URL=postgres://myuser:mypassword@postgres:5432/mydb
+      - QDRANT_URL=http://qdrant:6333
+      - OLLAMA_URL=http://ollama:11434
+    volumes:
+      - ./axum-crawler:/app 
+      - cargo-cache:/usr/local/cargo/registry
+    depends_on:
+      - qdrant
+      - postgres
+      - ollama
   lora:
     build: ./lora-server
     ports:
@@ -124,3 +145,4 @@ volumes:
   postgres_data:
   prometheus_data:
   grafana_data:
+  cargo-cache:

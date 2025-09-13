@@ -24,7 +24,7 @@ fn should_skip(url: &str, visited: &HashSet<String>, max_pages: usize) -> bool {
     }
 
     // Skip static resources like images, pdfs, css, js, etc.
-    let re = Regex::new(r"\.(png|jpe?g|gif|svg|webp|pdf|ico|css|js)(\?.*)?$").unwrap();
+    let re = Regex::new(r"\.(png|jpe?g|gif|svg|webp|ico|css|js)(\?.*)?$").unwrap();
     if re.is_match(url) {
         return true;
     }
@@ -80,8 +80,9 @@ fn chunk_paragraphs(paragraphs: Vec<String>, max_chars: usize, overlap: usize) -
 
 /// Extract meaningful text content from HTML
 fn extract_text(html: &str) -> Vec<String> {
+    
     let doc = Html::parse_document(html);
-    let selector = Selector::parse("main, article, section, p, h1, h2, h3").unwrap();
+    let selector = Selector::parse("main, article, section, p, h1, h2, h3, span, div, h4, h5").unwrap();
     let mut texts = Vec::new();
 
     for el in doc.select(&selector) {
@@ -90,7 +91,7 @@ fn extract_text(html: &str) -> Vec<String> {
         text = text.split_whitespace().collect::<Vec<_>>().join(" ");
 
         // skip too-short snippets
-        if text.len() < 30 {
+        if text.len() < 10 {
             continue;
         }
         // skip strings that are just symbols
@@ -98,7 +99,7 @@ fn extract_text(html: &str) -> Vec<String> {
             continue;
         }
         // skip boilerplate like "cookie", "impressum", "datenschutz"
-        if Regex::new(r"^(cookie|datenschutz|impressum)").unwrap().is_match(&text.to_lowercase()) {
+        if Regex::new(r"^(cookie|datenschutz|impressum|privacy policy|imprint)").unwrap().is_match(&text.to_lowercase()) {
             continue;
         }
 
@@ -118,8 +119,9 @@ pub async fn crawl_site(base_url: &str, max_pages: usize) -> CrawlResult {
 
     let mut visited = HashSet::new();  // visited URLs
     let mut queue = VecDeque::new();   // queue of URLs to process
+    println!("URL: {}", &base_url);
     queue.push_back(base_url.to_string());
-
+    
     let mut all_chunks = Vec::new();
 
     while !queue.is_empty() && visited.len() < max_pages {
@@ -128,10 +130,13 @@ pub async fn crawl_site(base_url: &str, max_pages: usize) -> CrawlResult {
         let mut futures = FuturesUnordered::new();
 
         for url in batch {
+            println!("URL2: {}", &url);
             // skip already visited or unwanted resources
             if should_skip(&url, &visited, max_pages) {
+                println!("should_skip: true");
                 continue;
             }
+            println!("should_skip: false");
             visited.insert(url.clone());
 
             let client = client.clone();
@@ -141,13 +146,17 @@ pub async fn crawl_site(base_url: &str, max_pages: usize) -> CrawlResult {
             futures.push(async move {
                 if let Ok(resp) = client.get(&url).send().await {
                     if resp.status() != 200 {
+                        println!("open error");
                         return (url, None, Vec::new());
                     }
                     if let Ok(body) = resp.text().await {
                         println!("parsing {}", url.clone());
                         // extract and chunk text
+                        println!("Body length for {}: {}", url, body.len());
                         let texts = extract_text(&body);
+                        println!("Extracted {} text blocks", texts.len());
                         let chunks = chunk_paragraphs(texts, 3000, 300);
+                        println!("Got {} chunks", chunks.len());
 
                         // extract links from page
                         let doc = Html::parse_document(&body);

@@ -88,9 +88,9 @@ export default function Chatbot() {
   // --- ENDPOINTS ---
   const endpoints = useMemo(
     () => ({
-      openai: "http://localhost:3000/search", // OpenAI backend
+      openai: "http://162.55.58.143:3000/search", // OpenAI backend
       company: "http://localhost:8000/generate", // LoRA company model backend
-      parser: "http://localhost:4000/parser/parse-url", // crawler/parser backend
+      parser: "http://162.55.58.143:4000/parser/parse-url", // crawler/parser backend
     }),
     []
   );

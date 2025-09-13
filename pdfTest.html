@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PDF Test Page</title>
+</head>
+<body>
+  <h1>PDF Embedding Test</h1>
+
+  <!-- 1. Simple link to PDF -->
+  <p>
+    <a href="example.pdf" target="_blank">Open PDF in new tab</a>
+  </p>
+
+  <!-- 2. Embed PDF with <iframe> -->
+  <h2>PDF with iframe</h2>
+  <iframe src="example.pdf" width="600" height="400"></iframe>
+
+  <!-- 3. Embed PDF with <embed> -->
+  <h2>PDF with embed</h2>
+  <embed src="example.pdf" type="application/pdf" width="600" height="400">
+
+  <!-- 4. Embed PDF with <object> -->
+  <h2>PDF with object</h2>
+  <object data="example.pdf" type="application/pdf" width="600" height="400">
+    <p>Your browser doesn’t support PDFs.
+       <a href="example.pdf">Download PDF</a>.</p>
+  </object>
+</body>
+</html>

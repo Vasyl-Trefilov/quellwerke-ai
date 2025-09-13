@@ -62,7 +62,7 @@ const App = () => {
         }}
       >
         {/* outer glowing border */}
-        <div
+        {/* <div
           style={{
             zIndex: 2,
             top: "calc(15% - 2px)",
@@ -90,12 +90,12 @@ const App = () => {
             boxShadow: "0 8px 40px rgba(255, 64, 129, 0.3)",
             background: "linear-gradient(135deg, #000000, #030303)",
           }}
-        ></div>
+        ></div> */}
         {/* Backgrounds */}
         {renderBackground()}
 
         {/* chatbot container */}
-        <div
+        {/* <div
           style={{
             zIndex: 4, // 4 for animation over chatbot, 3 to have UI over anim
             top: "calc(15%)",
@@ -111,7 +111,7 @@ const App = () => {
           }}
         >
           <Chatbot />
-        </div>
+        </div> */}
 
         {/* Buttons to switch backgrounds */}
         <div

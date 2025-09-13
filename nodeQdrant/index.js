@@ -134,13 +134,13 @@ app.post('/search', async (req, res) => {
     }
 
     // 5) Send simple "citations" at the end
-    res.write(JSON.stringify({
-      sources: textFromDb.rows.map(
-          (r) => ({
-            title: `Doc ${r.doc_id} (chunk ${r.chunk_index})`,
-            url: `db://${r.doc_id}#${r.chunk_index}`,
-          })),
-    }) + '\n');
+    // res.write(JSON.stringify({
+    //   sources: textFromDb.rows.map(
+    //       (r) => ({
+    //         title: `Doc ${r.doc_id} (chunk ${r.chunk_index})`,
+    //         url: `db://${r.doc_id}#${r.chunk_index}`,
+    //       })),
+    // }) + '\n');
 
     res.end();
   } catch (err) {

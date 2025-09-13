@@ -1,0 +1,10 @@
+/home/vasyl-trefilov/quellWerkeBot/exporter/target/debug/deps/hashlink-ef172bbc1d50860b.d: /home/vasyl-trefilov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.10.0/src/lib.rs /home/vasyl-trefilov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.10.0/src/linked_hash_map.rs /home/vasyl-trefilov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.10.0/src/linked_hash_set.rs /home/vasyl-trefilov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.10.0/src/lru_cache.rs
+
+/home/vasyl-trefilov/quellWerkeBot/exporter/target/debug/deps/libhashlink-ef172bbc1d50860b.rlib: /home/vasyl-trefilov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.10.0/src/lib.rs /home/vasyl-trefilov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.10.0/src/linked_hash_map.rs /home/vasyl-trefilov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.10.0/src/linked_hash_set.rs /home/vasyl-trefilov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.10.0/src/lru_cache.rs
+
+/home/vasyl-trefilov/quellWerkeBot/exporter/target/debug/deps/libhashlink-ef172bbc1d50860b.rmeta: /home/vasyl-trefilov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.10.0/src/lib.rs /home/vasyl-trefilov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.10.0/src/linked_hash_map.rs /home/vasyl-trefilov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.10.0/src/linked_hash_set.rs /home/vasyl-trefilov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.10.0/src/lru_cache.rs
+
+/home/vasyl-trefilov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.10.0/src/lib.rs:
+/home/vasyl-trefilov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.10.0/src/linked_hash_map.rs:
+/home/vasyl-trefilov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.10.0/src/linked_hash_set.rs:
+/home/vasyl-trefilov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashlink-0.10.0/src/lru_cache.rs:
