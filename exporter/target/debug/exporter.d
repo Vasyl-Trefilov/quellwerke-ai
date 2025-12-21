@@ -1,1 +1,0 @@
-/home/vasyl-trefilov/quellWerkeBot/exporter/target/debug/exporter: /home/vasyl-trefilov/quellWerkeBot/exporter/src/db.rs /home/vasyl-trefilov/quellWerkeBot/exporter/src/main.rs /home/vasyl-trefilov/quellWerkeBot/exporter/src/state.rs
